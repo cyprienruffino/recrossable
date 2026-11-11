@@ -37,9 +37,9 @@ Building
 The backend is built with CMake. dlib is downloaded and compiled in, unless
 DLIB_SOURCE_DIR points to an extracted dlib source tree.
 
-Everything needed is in the remarkable-sdk dev shell⁵:
+Everything needed is in the nix-remarkable-sdk dev shell⁵:
 
-    nix develop github:cyprienruffino/remarkable-sdk
+    nix develop github:cyprienruffino/nix-remarkable-sdk
 
 For the Paper Pro family:
 
@@ -51,7 +51,7 @@ For the Paper Pro family:
 rm-deploy installs it in /home/root/xovi/exthome/appload/ on the tablet and
 restarts xochitl; rm-logs recrossable follows its logs.
 
-⁵: https://github.com/cyprienruffino/remarkable-sdk
+⁵: https://github.com/cyprienruffino/nix-remarkable-sdk
 
 
 Developing on a PC
