@@ -37,27 +37,31 @@ Building
 The backend is built with CMake. dlib is downloaded and compiled in, unless
 DLIB_SOURCE_DIR points to an extracted dlib source tree.
 
-For the Paper Pro family, with the toltec toolchain image:
+Everything needed is in the remarkable-sdk dev shell⁵:
 
-    docker run --rm -v $PWD:/src -w /src ghcr.io/toltec-dev/base:v4.0 bash -c '
-        apt-get update && apt-get install -y qt6-base-dev-tools
-        . /opt/x-tools/switch-aarch64.sh
-        cmake -B build -DCMAKE_TOOLCHAIN_FILE=/usr/share/cmake/$CHOST.cmake
-        cmake --build build
-        cmake --install build --prefix dist/recrossable'
+    nix develop github:cyprienruffino/remarkable-sdk
 
-Then copy dist/recrossable to /home/root/xovi/exthome/appload/ on the tablet
-and reload AppLoad.
+For the Paper Pro family:
+
+    cmake -B build-rm -G Ninja -DCMAKE_TOOLCHAIN_FILE=$RM_TOOLCHAIN_FILE
+    cmake --build build-rm
+    cmake --install build-rm --prefix dist/recrossable
+    rm-deploy dist/recrossable
+
+rm-deploy installs it in /home/root/xovi/exthome/appload/ on the tablet and
+restarts xochitl; rm-logs recrossable follows its logs.
+
+⁵: https://github.com/cyprienruffino/remarkable-sdk
 
 
 Developing on a PC
 ------------------
 
-shell.nix has everything needed. The backend can generate a puzzle on its own:
+The backend can generate a puzzle on its own:
 
     cmake -B build-pc -G Ninja && cmake --build build-pc
     cmake --install build-pc --prefix dist-pc/recrossable
-    cd dist-pc/recrossable && ./backend/entry --generate ginsberg
+    cd dist-pc/recrossable && ./backend/entry --generate easy ginsberg
 
 The frontend can be previewed and tested against a mock of AppLoad, which
 serves dev/fixture-puzzle.json:
