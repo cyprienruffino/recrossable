@@ -1,5 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>nyt.tsv</file>
-    </qresource>
-</RCC>

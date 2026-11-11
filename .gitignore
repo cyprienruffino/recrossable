@@ -71,3 +71,6 @@ Thumbs.db
 *.dll
 *.exe
 
+
+# CMake build directories
+/build*/

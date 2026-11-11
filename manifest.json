@@ -1,0 +1,8 @@
+{
+    "id": "recrossable",
+    "name": "reCrossable",
+    "entry": "/ui/main.qml",
+    "loadsBackend": true,
+    "canHaveMultipleFrontends": false,
+    "supportsScaling": true
+}

@@ -1,6 +1,54 @@
-Simple crossword game (mainly for the reMarkable tablet, but should work everywhere)
+Simple crossword game for the reMarkable tablet: write letters in the squares with the pen.
 
 Uses CWC¹ for generating crosswords, and a simple neural net using dlib² for recognising characters.
 
 ¹: http://cwordc.sourceforge.net/
 ²: http://dlib.net/
+
+
+Running on the tablet
+---------------------
+
+reCrossable is an AppLoad³ application, for reMarkable OS 3.x with xovi and
+AppLoad installed. It's made of:
+
+  - ui/main.qml: the frontend, loaded by AppLoad inside xochitl
+  - backend/: the backend process, which generates crosswords and recognizes
+    letters, talking to the frontend over AppLoad's socket
+
+³: https://github.com/asivery/rm-appload
+
+
+Building
+--------
+
+The backend is built with CMake. dlib is downloaded and compiled in, unless
+DLIB_SOURCE_DIR points to an extracted dlib source tree.
+
+For the Paper Pro family, with the toltec toolchain image:
+
+    docker run --rm -v $PWD:/src -w /src ghcr.io/toltec-dev/base:v4.0 bash -c '
+        apt-get update && apt-get install -y qt6-base-dev-tools
+        . /opt/x-tools/switch-aarch64.sh
+        cmake -B build -DCMAKE_TOOLCHAIN_FILE=/usr/share/cmake/$CHOST.cmake
+        cmake --build build
+        cmake --install build --prefix dist/recrossable'
+
+Then copy dist/recrossable to /home/root/xovi/exthome/appload/ on the tablet
+and reload AppLoad.
+
+
+Developing on a PC
+------------------
+
+shell.nix has everything needed. The backend can generate a puzzle on its own:
+
+    cmake -B build-pc -G Ninja && cmake --build build-pc
+    cmake --install build-pc --prefix dist-pc/recrossable
+    cd dist-pc/recrossable && ./backend/entry --generate ginsberg
+
+The frontend can be previewed and tested against a mock of AppLoad, which
+serves dev/fixture-puzzle.json:
+
+    QML_XHR_ALLOW_FILE_READ=1 qml -I dev/mock dev/preview.qml
+    QML_XHR_ALLOW_FILE_READ=1 qmltestrunner -import dev/mock -input dev/tests
