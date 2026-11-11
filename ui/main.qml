@@ -375,13 +375,17 @@ Rectangle {
             }
 
             // xochitl delivers the pen as plain mouse events, not as a stylus device,
-            // which is also how AppLoad's own qtfb windows receive it
+            // which is also how AppLoad's own qtfb windows receive it. Touches come
+            // as mouse events synthesized by Qt; ignore those so a resting palm doesn't write.
             MouseArea {
                 id: pen
                 anchors.fill: parent
                 preventStealing: true
                 onPressed: mouse => {
-                    console.log("recrossable: press source", mouse.source, "buttons", mouse.buttons)
+                    if (mouse.source !== Qt.MouseEventNotSynthesized) {
+                        mouse.accepted = false
+                        return
+                    }
                     ink.begin(mouse.x, mouse.y)
                 }
                 onPositionChanged: mouse => ink.extend(mouse.x, mouse.y)
