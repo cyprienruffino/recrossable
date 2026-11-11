@@ -22,6 +22,7 @@ Rectangle {
         "Large": ["ginsberg", "ginsberg2", "five", "smithnsteen", "fourdots", "15x15-independent-a", "15x15-guardian-a", "15x15-guardian-b"]
     })
     property string puzzleSize: "Medium"
+    property string level: "Easy"
 
     property var puzzle: null
     property var entries: []          // letter per cell, "" when empty
@@ -44,7 +45,7 @@ Rectangle {
         const patterns = patternSets[puzzleSize]
         generating = true
         status = "Generating puzzle…"
-        backend.sendMessage(msgNewPuzzle, patterns[Math.floor(Math.random() * patterns.length)])
+        backend.sendMessage(msgNewPuzzle, level.toLowerCase() + " " + patterns[Math.floor(Math.random() * patterns.length)])
     }
 
     function loadPuzzle(json) {
@@ -139,8 +140,8 @@ Rectangle {
         }
     }
 
-    // Top bar
-    Row {
+    // Top bar: size and difficulty of the next puzzle, then actions
+    Column {
         id: toolbar
         anchors {
             top: parent.top
@@ -148,27 +149,43 @@ Rectangle {
             right: parent.right
             margins: 16
         }
-        height: 72
         spacing: 12
 
-        Repeater {
-            model: ["Small", "Medium", "Large"]
-            delegate: Button {
-                text: modelData
-                checked: root.puzzleSize === modelData
-                onClicked: root.puzzleSize = modelData
+        Row {
+            height: 64
+            spacing: 12
+            Repeater {
+                model: ["Small", "Medium", "Large"]
+                delegate: Button {
+                    text: modelData
+                    checked: root.puzzleSize === modelData
+                    onClicked: root.puzzleSize = modelData
+                }
+            }
+            Item { width: 12; height: 1 }
+            Repeater {
+                model: ["Easy", "Normal", "Hard"]
+                delegate: Button {
+                    text: modelData
+                    checked: root.level === modelData
+                    onClicked: root.level = modelData
+                }
             }
         }
-        Button {
-            text: "New"
-            enabled: !root.generating
-            onClicked: root.newPuzzle()
-        }
-        Button {
-            text: "Check"
-            enabled: root.puzzle !== null
-            checked: root.checking
-            onClicked: root.checking = !root.checking
+        Row {
+            height: 64
+            spacing: 12
+            Button {
+                text: "New"
+                enabled: !root.generating
+                onClicked: root.newPuzzle()
+            }
+            Button {
+                text: "Check"
+                enabled: root.puzzle !== null
+                checked: root.checking
+                onClicked: root.checking = !root.checking
+            }
         }
     }
 

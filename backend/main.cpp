@@ -13,6 +13,7 @@
 #include <cstring>
 #include <ctime>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -36,7 +37,7 @@ struct PacketHeader
 };
 
 // Frontend -> backend
-constexpr int MSG_NEW_PUZZLE = 1; // contents: pattern name
+constexpr int MSG_NEW_PUZZLE = 1; // contents: "<level> <pattern name>", level being easy, normal or hard
 constexpr int MSG_RECOGNIZE = 2; // contents: "<cell> <cell size>;x,y x,y ...;x,y ..."
 
 // Backend -> frontend
@@ -128,14 +129,28 @@ int main(int argc, char *argv[])
     std::srand(std::time(nullptr));
     Symbol::buildindex();
 
-    PuzzleGenerator generator;
-    if (!generator.loadWordlist("data/nyt.tsv")) {
-        return 1;
+    // One word list per difficulty level, see tools/build_wordlists.py
+    std::map<std::string, PuzzleGenerator> generators;
+    for (const char *level : { "easy", "normal", "hard" }) {
+        if (!generators[level].loadWordlist(std::string("data/wordlists/") + level + ".tsv")) {
+            return 1;
+        }
     }
 
+    auto generate = [&](const std::string &request) -> std::string {
+        std::istringstream input(request);
+        std::string level, pattern;
+        input >> level >> pattern;
+        const auto generator = generators.find(level);
+        if (generator == generators.end() || !isValidPatternName(pattern)) {
+            return {};
+        }
+        return generator->second.generateWithTimeout("data/patterns/" + pattern, generationTimeoutMs, 5);
+    };
+
     // For testing patterns without a frontend
-    if (std::string(argv[1]) == "--generate" && argc > 2) {
-        const std::string puzzle = generator.generateWithTimeout("data/patterns/" + std::string(argv[2]), generationTimeoutMs, 5);
+    if (std::string(argv[1]) == "--generate" && argc > 3) {
+        const std::string puzzle = generate(std::string(argv[2]) + ' ' + argv[3]);
         std::cout << puzzle << std::endl;
         return puzzle.empty() ? 1 : 0;
     }
@@ -201,11 +216,7 @@ int main(int argc, char *argv[])
             sendMessage(MSG_ERASER, eraser.isErasing() ? "1" : "0");
             break;
         case MSG_NEW_PUZZLE: {
-            if (!isValidPatternName(contents)) {
-                sendMessage(MSG_ERROR, "Invalid pattern: " + contents);
-                break;
-            }
-            const std::string puzzle = generator.generateWithTimeout("data/patterns/" + contents, generationTimeoutMs, 5);
+            const std::string puzzle = generate(contents);
             if (puzzle.empty()) {
                 sendMessage(MSG_ERROR, "Could not generate a crossword, try again");
             } else {

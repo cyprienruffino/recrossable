@@ -56,5 +56,6 @@ add_custom_target(resources ALL DEPENDS ${CMAKE_BINARY_DIR}/resources.rcc)
 # Installs the AppLoad application directory: cmake --install build --prefix <appload dir>/recrossable
 install(TARGETS entry DESTINATION backend)
 install(FILES manifest.json icon.png ${CMAKE_BINARY_DIR}/resources.rcc DESTINATION .)
-install(FILES nyt.tsv net.dat DESTINATION data)
+install(FILES net.dat DESTINATION data)
+install(DIRECTORY wordlists/ DESTINATION data/wordlists)
 install(DIRECTORY patterns/ DESTINATION data/patterns PATTERN gmon.out EXCLUDE)
