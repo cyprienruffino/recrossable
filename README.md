@@ -44,8 +44,8 @@ cmake --install build-rm --prefix dist/recrossable
 rm-deploy dist/recrossable
 ```
 
-`rm-deploy` installs it in `/home/root/xovi/exthome/appload/` on the tablet and
-restarts xochitl; `rm-logs recrossable` follows its logs.
+`rm-deploy` installs it in `/home/root/xovi/exthome/appload/` on the tablet
+(reopen the app to use the new version); `rm-logs recrossable` follows its logs.
 
 ## Developing on a PC
 
