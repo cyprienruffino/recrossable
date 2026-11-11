@@ -64,3 +64,13 @@ serves `dev/fixture-puzzle.json`:
 QML_XHR_ALLOW_FILE_READ=1 qml -I dev/mock dev/preview.qml
 QML_XHR_ALLOW_FILE_READ=1 qmltestrunner -import dev/mock -input dev/tests
 ```
+
+## Thanks
+
+reCrossable was written by [sandsmark](https://github.com/sandsmark) for the
+reMarkable 1: this is a port of the [original reCrossable](https://github.com/sandsmark/recrossable)
+to current reMarkable OS, with its crossword generator and letter recognizer.
+Thanks as well to [CWC](http://cwordc.sourceforge.net/) for the crossword
+compiler, the [xd crossword corpus](https://xd.saul.pw/data/) for the clues, and
+[AppLoad](https://github.com/asivery/rm-appload) for making apps like this
+possible on the Paper Pro.
