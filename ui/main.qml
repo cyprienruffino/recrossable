@@ -342,22 +342,19 @@ Rectangle {
                 pendingSegments = []
             }
 
-            // Only the pen (or a mouse in the emulator) writes; fingers are ignored so a resting palm does nothing
-            PointHandler {
+            // xochitl delivers the pen as plain mouse events, not as a stylus device,
+            // which is also how AppLoad's own qtfb windows receive it
+            MouseArea {
                 id: pen
-                acceptedDevices: PointerDevice.Stylus | PointerDevice.Mouse
-                onActiveChanged: {
-                    if (active) {
-                        ink.begin(point.position.x, point.position.y)
-                    } else {
-                        ink.end()
-                    }
+                anchors.fill: parent
+                preventStealing: true
+                onPressed: mouse => {
+                    console.log("recrossable: press source", mouse.source, "buttons", mouse.buttons)
+                    ink.begin(mouse.x, mouse.y)
                 }
-                onPointChanged: {
-                    if (active) {
-                        ink.extend(point.position.x, point.position.y)
-                    }
-                }
+                onPositionChanged: mouse => ink.extend(mouse.x, mouse.y)
+                onReleased: ink.end()
+                onCanceled: ink.end()
             }
 
             // Letters are often several strokes; wait for the pen to pause before recognizing
