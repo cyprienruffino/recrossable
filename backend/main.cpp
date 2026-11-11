@@ -1,12 +1,14 @@
 // AppLoad backend for reCrossable: generates crosswords and recognizes
 // handwritten letters, talking to the QML frontend over AppLoad's socket.
 
+#include "eraser.h"
 #include "puzzle.h"
 #include "recognizer.h"
 
 #include "cwc/symbol.hh"
 
 #include <cctype>
+#include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
@@ -15,6 +17,7 @@
 #include <string>
 #include <vector>
 
+#include <poll.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
@@ -41,6 +44,7 @@ constexpr int MSG_READY = 100;
 constexpr int MSG_PUZZLE = 101; // contents: puzzle JSON
 constexpr int MSG_RECOGNIZED = 102; // contents: "<cell> <letter>", letter is "" when empty and "!" to clear
 constexpr int MSG_ERROR = 103;
+constexpr int MSG_ERASER = 104; // contents: "1" while the eraser end of the pen is near the screen, "0" otherwise
 
 constexpr int generationTimeoutMs = 8000;
 
@@ -154,8 +158,26 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    EraserWatcher eraser;
+    eraser.open();
+
     std::vector<char> buffer(MAX_MESSAGE_LENGTH);
     while (true) {
+        pollfd fds[2] = { { g_socket, POLLIN, 0 }, { eraser.fd(), POLLIN, 0 } };
+        if (poll(fds, eraser.fd() == -1 ? 1 : 2, -1) < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            perror("poll");
+            break;
+        }
+        if (eraser.fd() != -1 && (fds[1].revents & POLLIN) && eraser.readEvents()) {
+            sendMessage(MSG_ERASER, eraser.isErasing() ? "1" : "0");
+        }
+        if (!(fds[0].revents & (POLLIN | POLLHUP | POLLERR))) {
+            continue;
+        }
+
         PacketHeader header;
         if (recv(g_socket, &header, sizeof header, 0) < 1) {
             break;
@@ -176,6 +198,7 @@ int main(int argc, char *argv[])
             return 0;
         case MESSAGE_SYSTEM_NEW_COORDINATOR:
             sendMessage(MSG_READY, "ready");
+            sendMessage(MSG_ERASER, eraser.isErasing() ? "1" : "0");
             break;
         case MSG_NEW_PUZZLE: {
             if (!isValidPatternName(contents)) {

@@ -85,5 +85,35 @@ Item {
             compare(root.selectedCell, before)
             verify(ink.strokes[block] === undefined)
         }
+
+        function test_eraser() {
+            const root = app.item
+            const ink = findChild(root, "ink")
+            const backend = findChild(root, "backend")
+            const size = findChild(root, "board").cellSize
+            root.setEntry(0, "A")
+            root.setEntry(1, "B")
+            root.setEntry(2, "C")
+
+            backend.messageReceived(104, "1")
+            verify(root.erasing)
+            // Rub over the first two cells
+            mousePress(ink, size * 0.5, size * 0.5)
+            mouseMove(ink, size * 1.0, size * 0.5)
+            mouseMove(ink, size * 1.5, size * 0.5)
+            mouseRelease(ink, size * 1.5, size * 0.5)
+            compare(root.entries[0], "")
+            compare(root.entries[1], "")
+            compare(root.entries[2], "C")
+            verify(ink.strokes[0] === undefined)
+
+            // Back to the tip: writing works again
+            backend.messageReceived(104, "0")
+            verify(!root.erasing)
+            mousePress(ink, size * 2.3, size * 0.3)
+            mouseMove(ink, size * 2.3, size * 0.7)
+            mouseRelease(ink, size * 2.3, size * 0.7)
+            compare(ink.strokes[2].length, 1)
+        }
     }
 }

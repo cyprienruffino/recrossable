@@ -20,6 +20,7 @@ if(NOT DLIB_SOURCE_DIR)
 endif()
 
 add_executable(entry
+    backend/eraser.cpp
     backend/main.cpp
     backend/puzzle.cpp
     backend/recognizer.cpp

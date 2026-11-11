@@ -13,6 +13,7 @@ Rectangle {
     readonly property int msgPuzzle: 101
     readonly property int msgRecognized: 102
     readonly property int msgError: 103
+    readonly property int msgEraser: 104
 
     // Patterns that generate in a few seconds on the device
     readonly property var patternSets: ({
@@ -29,6 +30,7 @@ Rectangle {
     property bool selectAcross: true
     property bool checking: false
     property bool generating: true
+    property bool erasing: false      // the eraser end of the pen is near the screen
     property string status: "Starting…"
 
     readonly property bool solved: puzzle !== null && entries.join("") === puzzle.solution.replace(/#/g, "")
@@ -129,6 +131,9 @@ Rectangle {
             case root.msgError:
                 root.generating = false
                 root.status = contents
+                break
+            case root.msgEraser:
+                root.erasing = contents === "1"
                 break
             }
         }
@@ -260,7 +265,26 @@ Rectangle {
                 markDirty(Qt.rect(x, y, board.cellSize, board.cellSize))
             }
 
+            // Clears the letter and the ink of every cell the eraser goes over
+            function erase(x, y) {
+                const cell = cellAt(x, y)
+                if (!root.isOpen(cell) || cell === current.lastErased) {
+                    return
+                }
+                current.lastErased = cell
+                if (recognizeTimer.cell === cell) {
+                    recognizeTimer.stop()
+                }
+                clearCell(cell)
+                root.setEntry(cell, "")
+            }
+
             function begin(x, y) {
+                if (root.erasing) {
+                    current = { erasing: true, lastErased: -1 }
+                    erase(x, y)
+                    return
+                }
                 const cell = cellAt(x, y)
                 if (!root.isOpen(cell)) {
                     current = null
@@ -282,6 +306,10 @@ Rectangle {
                 if (current === null) {
                     return
                 }
+                if (current.erasing) {
+                    erase(x, y)
+                    return
+                }
                 // Keep the ink inside the cell it started in
                 const left = (current.cell % board.columns) * board.cellSize
                 const top = Math.floor(current.cell / board.columns) * board.cellSize
@@ -297,6 +325,10 @@ Rectangle {
 
             function end() {
                 if (current === null) {
+                    return
+                }
+                if (current.erasing) {
+                    current = null
                     return
                 }
                 const cell = current.cell
